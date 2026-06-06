@@ -6,11 +6,13 @@
     "build": "now-sdk clean && sn-sdk-next-ui unpack --clean && snc ui-component generate-update-set --offline --no-type-check && sn-sdk-next-ui unpack && now-sdk build --skip-clean",
     "deploy": "now-sdk pack && now-sdk install"
   },
+  "optionalDependencies": {
+    "@servicenow/now-button": "instance"
+  },
   "devDependencies": {
-    "@servicenow/ui-core": "24.1.1",
-    "@servicenow/ui-renderer-snabbdom": "24.1.1",
-    "@servicenow/now-button": "19.8.2-ecd",
-    "@servicenow/eslint-plugin-sdk-app-plugin": "4.5.0",
+    "@servicenow/ui-core": "latest",
+    "@servicenow/ui-renderer-snabbdom": "latest",
+    "@servicenow/eslint-plugin-sdk-app-plugin": "latest",
     "eslint": "8.50.0",
     "sass": "1.53.0"
   }
