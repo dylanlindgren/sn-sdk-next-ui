@@ -2,8 +2,8 @@
   "module": "src/now-ui/index.js",
   "scripts": {
     "dev": "snc ui-component develop --fetch-assets-from-instance --no-type-check",
-    "clean": "now-sdk clean && sn-sdk-now-ui unpack --clean",
-    "build": "now-sdk clean && sn-sdk-now-ui unpack --clean && snc ui-component generate-update-set --offline --no-type-check && sn-sdk-now-ui unpack && now-sdk build --skip-clean",
+    "clean": "now-sdk clean && sn-sdk-next-ui unpack --clean",
+    "build": "now-sdk clean && sn-sdk-next-ui unpack --clean && snc ui-component generate-update-set --offline --no-type-check && sn-sdk-next-ui unpack && now-sdk build --skip-clean",
     "deploy": "now-sdk pack && now-sdk install"
   },
   "devDependencies": {

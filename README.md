@@ -1,11 +1,11 @@
-# sn-sdk-now-ui – Next Experience UI components in your ServiceNow SDK project
+# sn-sdk-next-ui – Next Experience UI components in your ServiceNow SDK project
 
 
 Add Next Experience UI component development to a ServiceNow SDK (Fluent) project. Build components with the ServiceNow CLI, install them with the SDK.
 
 ## Why
 
-Building on ServiceNow with the SDK / Fluent is increasingly common and powerful. `sn-sdk-now-ui` makes it even more powerful by letting you develop Next Experience components **inside** an existing SDK project, so a single repository and scoped application holds both your Fluent/server code and your UI components.
+Building on ServiceNow with the SDK / Fluent is increasingly common and powerful. `sn-sdk-next-ui` makes it even more powerful by letting you develop Next Experience components **inside** an existing SDK project, so a single repository and scoped application holds both your Fluent/server code and your UI components.
 
 It does this by splitting responsibilities between the two toolchains:
 
@@ -23,13 +23,13 @@ From the root of your SDK project:
 
 ```bash
 # 1. Install
-npm add -D sn-sdk-now-ui
+npm add -D sn-sdk-next-ui
 
 # 2. Transform the project into a hybrid SDK + Next Experience project (run once)
-npm exec sn-sdk-now-ui init
+npm exec sn-sdk-next-ui init
 
 # 3. Add one or more components (interactive)
-npm exec sn-sdk-now-ui add
+npm exec sn-sdk-next-ui add
 ```
 
 > [!NOTE]
@@ -37,14 +37,14 @@ npm exec sn-sdk-now-ui add
 >
 > | Task | npm | pnpm | yarn |
 > | --- | --- | --- | --- |
-> | run a binary | `npm exec sn-sdk-now-ui …` | `pnpm exec sn-sdk-now-ui …` | `yarn sn-sdk-now-ui …` |
+> | run a binary | `npm exec sn-sdk-next-ui …` | `pnpm exec sn-sdk-next-ui …` | `yarn sn-sdk-next-ui …` |
 > | run a script | `npm run dev` | `pnpm dev` | `yarn dev` |
 >
-> `sn-sdk-now-ui` detects which manager invoked it and uses it for any installs it runs, so you don't need to configure anything.
+> `sn-sdk-next-ui` detects which manager invoked it and uses it for any installs it runs, so you don't need to configure anything.
 
 ## Commands
 
-### `sn-sdk-now-ui init`
+### `sn-sdk-next-ui init`
 
 Transforms the current SDK project in place. It:
 
@@ -56,7 +56,7 @@ Transforms the current SDK project in place. It:
 
 `init` is run **once**. It refuses to run if `now-ui.json` already exists, or if the directory isn't an SDK project (no `now.config.json`).
 
-### `sn-sdk-now-ui add`
+### `sn-sdk-next-ui add`
 
 Interactively scaffolds one or more components. For each component it:
 
@@ -123,12 +123,12 @@ Primitive props are applied as kebab-case attributes (`buttonSize` = `button-siz
 
 ## Plugins
 
-`sn-sdk-now-ui` can be extended by plugins that layer extra template files and `package.json` entries on top of the base. A plugin is any installed package that declares an `snSdkNowUiPlugin` field in its `package.json`:
+`sn-sdk-next-ui` can be extended by plugins that layer extra template files and `package.json` entries on top of the base. A plugin is any installed package that declares an `snSdkNextUiPlugin` field in its `package.json`:
 
 ```json
 {
-  "name": "my-sn-sdk-now-ui-plugin",
-  "snSdkNowUiPlugin": "./plugin.js"
+  "name": "my-sn-sdk-next-ui-plugin",
+  "snSdkNextUiPlugin": "./plugin.js"
 }
 ```
 
@@ -145,8 +145,8 @@ export const plugin = {
 Plugins declared as dependencies of your project are **discovered automatically**. You can also pass them explicitly (e.g. a local path during development):
 
 ```bash
-npm exec sn-sdk-now-ui init --plugins ../my-sn-sdk-now-ui-plugin
-npm exec sn-sdk-now-ui add --plugins ../my-sn-sdk-now-ui-plugin
+npm exec sn-sdk-next-ui init --plugins ../my-sn-sdk-next-ui-plugin
+npm exec sn-sdk-next-ui add --plugins ../my-sn-sdk-next-ui-plugin
 ```
 
 ## License

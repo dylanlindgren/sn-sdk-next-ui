@@ -1,7 +1,7 @@
 // Dev preview — EDIT THIS FILE to control how your components render.
 //
 // `snc ui-component develop` serves this as the page entry. Components are read
-// from now-ui.json, so anything you create with `sn-sdk-now-ui add` shows up here
+// from now-ui.json, so anything you create with `sn-sdk-next-ui add` shows up here
 // automatically using its default property values.
 //
 // To customise a component's preview, add an entry to `previews` below, keyed by

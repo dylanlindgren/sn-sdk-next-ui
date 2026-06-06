@@ -153,7 +153,7 @@ function packageEntry(pkg) {
 }
 
 // Load a descriptor from a plugin package directory. The plugin opts in by
-// declaring a neutral `snSdkNowUiPlugin` field in its package.json pointing at the
+// declaring a neutral `snSdkNextUiPlugin` field in its package.json pointing at the
 // module that exports { templateDir, packageMerge? }. Returns null if the
 // directory isn't a plugin.
 async function loadPluginFromDir(dir) {
@@ -165,7 +165,7 @@ async function loadPluginFromDir(dir) {
   }
   // The marker is what we look for — never a hard-coded package name — so the
   // public package's source never reveals which plugins exist.
-  const entryRel = pkg.snSdkNowUiPlugin;
+  const entryRel = pkg.snSdkNextUiPlugin;
   if (!entryRel) return null;
 
   const entry =
@@ -220,7 +220,7 @@ async function loadPluginSpec(spec, cwd) {
   const descriptor = await loadPluginFromDir(dir);
   if (!descriptor) {
     throw new Error(
-      `Plugin "${spec}" is not a valid plugin (no "snSdkNowUiPlugin" field in its package.json).`,
+      `Plugin "${spec}" is not a valid plugin (no "snSdkNextUiPlugin" field in its package.json).`,
     );
   }
   return descriptor;
@@ -319,7 +319,7 @@ function buildComponentEntry(name) {
 
 export async function init({ argv = [] } = {}) {
   const cwd = process.cwd();
-  p.intro("sn-sdk-now-ui init");
+  p.intro("sn-sdk-next-ui init");
 
   try {
     // Must be run inside an existing ServiceNow SDK project.
@@ -332,7 +332,7 @@ export async function init({ argv = [] } = {}) {
     // Idempotency guard: don't clobber an already-initialised project.
     if (await exists(path.join(cwd, "now-ui.json"))) {
       p.cancel(
-        "This project already looks initialised (now-ui.json exists). Use `sn-sdk-now-ui add` to create components.",
+        "This project already looks initialised (now-ui.json exists). Use `sn-sdk-next-ui add` to create components.",
       );
       process.exit(1);
     }
@@ -389,7 +389,7 @@ export async function init({ argv = [] } = {}) {
     await execa(pm, ["install"], { cwd });
     spinner.stop("Dependencies installed");
 
-    p.outro("Done! Add a component with: " + pm + " sn-sdk-now-ui add");
+    p.outro("Done! Add a component with: " + pm + " sn-sdk-next-ui add");
   } catch (error) {
     p.cancel(`init failed: ${error.message}`);
     process.exit(1);
@@ -400,12 +400,12 @@ export async function init({ argv = [] } = {}) {
 
 export async function add({ argv = [] } = {}) {
   const cwd = process.cwd();
-  p.intro("sn-sdk-now-ui add");
+  p.intro("sn-sdk-next-ui add");
 
   try {
     const nowUiPath = path.join(cwd, "now-ui.json");
     if (!(await exists(nowUiPath))) {
-      p.cancel("No now-ui.json found. Run `sn-sdk-now-ui init` first.");
+      p.cancel("No now-ui.json found. Run `sn-sdk-next-ui init` first.");
       process.exit(1);
     }
 
