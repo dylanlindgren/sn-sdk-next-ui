@@ -1,5 +1,5 @@
 /**
- * unpack-update-set (sdk-now-ui unpack)
+ * unpack-update-set (sn-sdk-now-ui unpack)
  *
  * Splits the single update-set XML produced by
  *   `snc ui-component generate-update-set --offline --no-type-check`
@@ -11,8 +11,8 @@
  * and merges with the Fluent/server records.
  *
  * Usage:
- *   sdk-now-ui unpack [--in <update-set.xml>] [--out <dir>] [--app-dir <name>]
- *   sdk-now-ui unpack --clean
+ *   sn-sdk-now-ui unpack [--in <update-set.xml>] [--out <dir>] [--app-dir <name>]
+ *   sn-sdk-now-ui unpack --clean
  *
  *   --in       Path to the update-set XML. Default: newest *.xml in ./.now-cli
  *   --out      Output root. Default: ./dist
@@ -106,7 +106,7 @@ export function unpack({ inPath, outRoot, appDir }) {
   return { written, byDir, appRoot };
 }
 
-// Entry point for `sdk-now-ui unpack <args>`.
+// Entry point for `sn-sdk-now-ui unpack <args>`.
 export function runUnpackCli(argv) {
   const cwd = process.cwd();
   const nowCliDir = join(cwd, ".now-cli");
@@ -114,7 +114,7 @@ export function runUnpackCli(argv) {
 
   if (args.help) {
     console.log(
-      `sdk-now-ui unpack — split an snc update-set XML into SDK record files
+      `sn-sdk-now-ui unpack — split an snc update-set XML into SDK record files
 
   --in <path>      Update-set XML. Default: newest *.xml in ./.now-cli
   --out <dir>      Output root. Default: ./dist

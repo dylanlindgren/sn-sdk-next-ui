@@ -68,9 +68,9 @@ function card(tag, componentLabel, variant) {
 }
 
 function injectStyles() {
-  if (document.getElementById("sdk-now-ui-preview-styles")) return;
+  if (document.getElementById("sn-sdk-now-ui-preview-styles")) return;
   const style = document.createElement("style");
-  style.id = "sdk-now-ui-preview-styles";
+  style.id = "sn-sdk-now-ui-preview-styles";
   style.textContent = `
     .preview-root { max-width: 1100px; margin: 0 auto; padding: 24px;
       font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
@@ -106,7 +106,7 @@ export function renderPreview({ manifest = {}, previews = {} } = {}) {
       const empty = document.createElement("p");
       empty.className = "preview-empty";
       empty.textContent =
-        "No components yet. Run `sdk-now-ui add` to create one, then reload.";
+        "No components yet. Run `sn-sdk-now-ui add` to create one, then reload.";
       root.append(empty);
     } else {
       const grid = document.createElement("div");

@@ -1,1 +1,1 @@
-// Component registry. `sdk-now-ui add` appends one import per component below.
+// Component registry. `sn-sdk-now-ui add` appends one import per component below.

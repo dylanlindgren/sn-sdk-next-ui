@@ -10,13 +10,13 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const [cmd, ...rest] = process.argv.slice(2);
 
 function printHelp() {
-  console.log(`sdk-now-ui — Next Experience UI components inside a ServiceNow SDK project
+  console.log(`sn-sdk-now-ui — Next Experience UI components inside a ServiceNow SDK project
 
 Usage:
-  sdk-now-ui init            Transform the current SDK project into a hybrid
+  sn-sdk-now-ui init            Transform the current SDK project into a hybrid
                              SDK + Next Experience project (run once).
-  sdk-now-ui add             Add one or more UI components (interactive).
-  sdk-now-ui unpack          Split an snc update-set XML into SDK record files.
+  sn-sdk-now-ui add             Add one or more UI components (interactive).
+  sn-sdk-now-ui unpack          Split an snc update-set XML into SDK record files.
                              (Used internally by the generated build script.)
 
 Options:
@@ -26,7 +26,7 @@ Options:
   -h, --help                 Show this help.
   -v, --version              Show the version.
 
-Run 'sdk-now-ui unpack --help' for unpack-specific options.`);
+Run 'sn-sdk-now-ui unpack --help' for unpack-specific options.`);
 }
 
 async function printVersion() {
