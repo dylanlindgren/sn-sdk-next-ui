@@ -39,13 +39,6 @@
     "url": "https://github.com/dylanlindgren/sn-sdk-next-ui/issues"
   },
   "homepage": "https://github.com/dylanlindgren/sn-sdk-next-ui#readme",
-  "devEngines": {
-    "packageManager": {
-      "name": "pnpm",
-      "version": "^11.5.1",
-      "onFail": "download"
-    }
-  },
   "dependencies": {
     "@clack/prompts": "^1.5.1",
     "ejs": "^6.0.1",
