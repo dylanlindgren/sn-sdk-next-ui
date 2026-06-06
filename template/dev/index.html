@@ -1,0 +1,59 @@
+<!doctype html>
+<html>
+  <head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+    <title><%= htmlWebpackPlugin.options.title %></title>
+
+    <!--
+			Confirm the exact path against your instance:
+			  1. Open  in a browser (logged in)
+			  2. DevTools > Network > filter "css", reload
+			  3. Find the theme / design-token stylesheet, copy its path
+			  4. Replace the href below with that path (keep it root-relative so
+			     it goes through the dev proxy, e.g. "/uxasset/....css")
+			If the path is NOT under /uxasset, also add its prefix to
+			development.proxy.proxies in now-cli.json so the dev server proxies it.
+		-->
+    <link
+      rel="stylesheet"
+      href="/$uxappimmutables.do?sysparm_request_type=ux_theme&sysparm_app_config_sys_id=e42a5af4c700201072b211d4d8c2607c&sysparm_app_sys_id=c86a62e2c7022010099a308dc7c26022&sysparm_page_registry=a84adaf4c700201072b211d4d8c260b7&uxpcb=wDt0PQBCrCzSekooBxwfER0KXe4=&deviceAdaptiveStyles=true"
+    />
+
+    <%if (htmlWebpackPlugin.options.theme) { %>
+    <style type="text/css" id="example-css">
+      <%= htmlWebpackPlugin.options.theme %>
+    </style>
+    <% } %>
+    <meta content="width=device-width, initial-scale=1" name="viewport" />
+  </head>
+  <body>
+    <script type="text/javascript" src="/snComponentLoader.dev.js"></script>
+    <% if (htmlWebpackPlugin.options.prefixTranslations) { %>
+    <script type="text/javascript">
+      window.__TRANSLATIONS_PREFIX_ENABLED__ = true;
+      window.__TRANSLATIONS_PREFIX__ =
+        "<%= htmlWebpackPlugin.options.translationsPrefix%>";
+    </script>
+    <% } %>
+    <script type="text/javascript">
+      snComponentLoader
+        .load([], {
+          polyfillBaseUrl: "<%= htmlWebpackPlugin.options.polyfillBaseUrl %>",
+        })
+        .then(function () {
+          if (window.ShadyCSS && window.ShadyCSS.CustomStyleInterface) {
+            var styleElement = document.getElementById("example-css");
+            window.ShadyCSS.CustomStyleInterface.addCustomStyle(styleElement);
+          }
+        });
+    </script>
+    <% if (htmlWebpackPlugin.options.loadLibraryUxf) { %>
+    <script type="module">
+      import "/uxasset/externals/@devsnc/library-uxf/index.jsdbx";
+    </script>
+    <% } %>
+    <script type="module">
+      import "<%= htmlWebpackPlugin.options.main %>";
+    </script>
+  </body>
+</html>

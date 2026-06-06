@@ -1,0 +1,9 @@
+:host {
+  display: block;
+}
+
+.button-group {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}

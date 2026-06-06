@@ -1,0 +1,49 @@
+import { createCustomElement } from '@servicenow/ui-core'
+import snabbdom, { Fragment } from '@servicenow/ui-renderer-snabbdom'
+import styles from './index.scss'
+import '@servicenow/now-button'
+
+// Example component demonstrating core UI framework patterns:
+// - Properties: configurable inputs (buttonSize)
+// - Actions: dispatching custom events
+// - View: rendering with snabbdom JSX syntax
+const view = (state) => {
+  const { buttonSize } = state.properties
+
+  return (
+    <Fragment>
+      <h3><%= componentName %></h3>
+      <p>Click a button to dispatch an action:</p>
+      <div className='button-group'>
+        <now-button size={buttonSize} append-to-meta={{ item: 'Option 1' }}>
+          Option 1
+        </now-button>
+        <now-button size={buttonSize} append-to-meta={{ item: 'Option 2' }}>
+          Option 2
+        </now-button>
+        <now-button size={buttonSize} append-to-meta={{ item: 'Option 3' }}>
+          Option 3
+        </now-button>
+      </div>
+    </Fragment>
+  )
+}
+
+createCustomElement('<%= componentName %>', {
+  renderer: { type: snabbdom },
+  properties: {
+    buttonSize: {
+      default: 'md',
+    },
+  },
+  actionHandlers: {
+    'NOW_BUTTON#CLICKED': ({ action: { meta: { appended } }, dispatch }) => {
+      // Re-dispatch as a component-specific action when a button is clicked.
+      dispatch('<%= componentName.toUpperCase() %>#ITEM_SELECTED', {
+        item: appended.item,
+      })
+    },
+  },
+  view,
+  styles,
+})

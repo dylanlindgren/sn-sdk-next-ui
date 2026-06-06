@@ -1,0 +1,15 @@
+{
+  "development": {
+    "proxy": {
+      "proxies": ["/api", "/$uxappimmutables.do"],
+      "timeout": 5000
+    },
+    "devServer": {
+      "client": {
+        "overlay": false
+      },
+      "indexTemplate": "dev/index.html"
+    }
+  },
+  "version": "2"
+}

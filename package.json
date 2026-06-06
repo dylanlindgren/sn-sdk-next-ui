@@ -1,0 +1,56 @@
+{
+  "name": "sdk-now-ui",
+  "version": "0.0.1",
+  "description": "Add Next Experience UI component development to a ServiceNow SDK (Fluent) project — build components with the ServiceNow CLI, install them with the SDK.",
+  "bin": {
+    "sdk-now-ui": "./src/index.js"
+  },
+  "exports": {
+    ".": "./src/lib.js"
+  },
+  "files": [
+    "src",
+    "template"
+  ],
+  "scripts": {
+    "test": "node --test",
+    "lint": "prettier --check .",
+    "format": "prettier --write ."
+  },
+  "keywords": [
+    "servicenow",
+    "now",
+    "next-experience",
+    "ui-builder",
+    "ui-component",
+    "fluent",
+    "sdk",
+    "cli"
+  ],
+  "author": "Dylan Lindgren <dylan.lindgren@servicenow.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dylanlindgren/sdk-now-ui.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dylanlindgren/sdk-now-ui/issues"
+  },
+  "homepage": "https://github.com/dylanlindgren/sdk-now-ui#readme",
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "^11.5.1",
+      "onFail": "download"
+    }
+  },
+  "dependencies": {
+    "@clack/prompts": "^1.5.1",
+    "ejs": "^6.0.1",
+    "execa": "^9.6.1"
+  },
+  "devDependencies": {
+    "prettier": "^3.0.0"
+  },
+  "type": "module"
+}
