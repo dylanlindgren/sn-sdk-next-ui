@@ -119,7 +119,7 @@ const previews = {
 Primitive props are applied as kebab-case attributes (`buttonSize` = `button-size`); object/array props are assigned as DOM properties.
 
 > [!NOTE]
-> `dev/index.html` contains a theme stylesheet URL that points at a specific instance. Follow the comment in that file to replace it with the path from your own instance.
+> The preview will use whatever theme is set for the Unified Navigation App on your instance. You can update the theme URL by following the comments in `dev/index.html`.
 
 ## Plugins
 
