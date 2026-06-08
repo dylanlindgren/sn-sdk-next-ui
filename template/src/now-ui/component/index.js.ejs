@@ -39,7 +39,7 @@ createCustomElement('<%= componentName %>', {
   actionHandlers: {
     'NOW_BUTTON#CLICKED': ({ action: { meta: { appended } }, dispatch }) => {
       // Re-dispatch as a component-specific action when a button is clicked.
-      dispatch('<%= componentName.toUpperCase() %>#ITEM_SELECTED', {
+      dispatch('<%= eventPrefix %>#ITEM_SELECTED', {
         item: appended.item,
       })
     },

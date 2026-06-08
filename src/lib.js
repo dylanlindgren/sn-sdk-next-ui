@@ -15,6 +15,10 @@ export const BASE_TEMPLATE_DIR = path.resolve(__dirname, "../template");
 // skips it (it isn't project scaffolding); `add` renders it once per component.
 const COMPONENT_SUBPATH = path.join("src", "now-ui", "component");
 
+// The per-component Storybook story template. Like COMPONENT_SUBPATH, `init`
+// skips it and `add` renders it once per component into stories/<name>.stories.js.
+const STORY_TEMPLATE_SUBPATH = path.join("stories", "component.stories.js.ejs");
+
 // package.json fragment that `init` deep-merges into the host project. Not a
 // file we copy — it's consumed.
 const PACKAGE_MERGE_FILE = "package.merge.json";
@@ -77,13 +81,14 @@ async function readJson(file) {
 
 // Ensure pnpm is allowed to run the given dependencies' build scripts, by
 // adding them under `allowBuilds:` in pnpm-workspace.yaml. Without this, pnpm
-// (10+) refuses to run those scripts and `install` exits non-zero. The file
-// format is simple and known (one `  'pkg': bool` per line), so we edit it
-// textually rather than pulling in a YAML dependency.
+// (11+) refuses to run those scripts and `install` exits non-zero. allowBuilds
+// only lives in pnpm-workspace.yaml, so we create that file if it's missing.
+// The format is simple and known (one `  'pkg': bool` per line), so we edit it
+// textually rather than pulling in a YAML dependency. No-op for non-pnpm projects.
 async function ensureAllowBuilds(cwd, pkgs) {
+  if (detectPackageManager() !== "pnpm") return; // allowBuilds is pnpm-only
   const file = path.join(cwd, "pnpm-workspace.yaml");
-  if (!(await exists(file))) return; // not a pnpm project; nothing to do
-  const content = await fs.readFile(file, "utf-8");
+  const content = (await exists(file)) ? await fs.readFile(file, "utf-8") : "";
   const lines = content.split("\n");
   const hasSection = lines.some((l) => /^allowBuilds:\s*$/.test(l));
 
@@ -98,7 +103,7 @@ async function ensureAllowBuilds(cwd, pkgs) {
   if (!hasSection) {
     const block = [
       "allowBuilds:",
-      ...missing.map((p) => `  '${p}': true`),
+      ...missing.map((pkg) => `  '${pkg}': true`),
     ].join("\n");
     const next = content.trim()
       ? content.replace(/\n*$/, "\n") + block + "\n"
@@ -111,7 +116,7 @@ async function ensureAllowBuilds(cwd, pkgs) {
   for (const line of lines) {
     out.push(line);
     if (/^allowBuilds:\s*$/.test(line)) {
-      for (const p of missing) out.push(`  '${p}': true`);
+      for (const pkg of missing) out.push(`  '${pkg}': true`);
     }
   }
   await fs.writeFile(file, out.join("\n"));
@@ -240,8 +245,7 @@ async function resolvePlugins(cwd, specs) {
 
 // Recursively copy a template tree into `dest`, rendering `.ejs` files with EJS
 // (the `.ejs` extension is stripped). `skip(relPath)` excludes entries. Plain
-// files are copied verbatim — important for dev/index.html, whose `<%= ... %>`
-// are webpack (HtmlWebpackPlugin) tags, not our EJS tags.
+// files are copied verbatim.
 async function copyTree(srcRoot, dest, data, skip = () => false) {
   async function walk(srcDir, destDir, rel) {
     await fs.mkdir(destDir, { recursive: true });
@@ -272,6 +276,13 @@ function toLabel(name) {
     .join(" ");
 }
 
+// The event-name prefix for a component, e.g. "my-counter" → "MY_COUNTER".
+// Hyphens become underscores so the prefix is a valid identifier; this must
+// match what the generated story listens for.
+function toEventPrefix(name) {
+  return name.toUpperCase().replace(/-/g, "_");
+}
+
 // Build the now-ui.json entry for a freshly added component.
 function buildComponentEntry(name) {
   return {
@@ -299,7 +310,7 @@ function buildComponentEntry(name) {
     },
     actions: [
       {
-        name: `${name.toUpperCase()}#ITEM_SELECTED`,
+        name: `${toEventPrefix(name)}#ITEM_SELECTED`,
         label: "Item selected",
         description: "Dispatched when the user clicks a button.",
         payload: [
@@ -357,7 +368,9 @@ export async function init({ argv = [] } = {}) {
     // Lay down the base project files, skipping the per-component template and
     // the package merge fragment. Then overlay each plugin's project files.
     const skip = (rel) =>
-      rel === PACKAGE_MERGE_FILE || rel === COMPONENT_SUBPATH;
+      rel === PACKAGE_MERGE_FILE ||
+      rel === COMPONENT_SUBPATH ||
+      rel === STORY_TEMPLATE_SUBPATH;
     await copyTree(BASE_TEMPLATE_DIR, cwd, data, skip);
     for (const plugin of plugins) {
       await copyTree(plugin.templateDir, cwd, data, skip);
@@ -380,7 +393,13 @@ export async function init({ argv = [] } = {}) {
     await writeJson(pkgPath, pkg);
 
     // Allow pnpm to run the build scripts the UI stack needs.
-    await ensureAllowBuilds(cwd, ["core-js", "sn-http-request"]);
+    await ensureAllowBuilds(cwd, [
+      "core-js",
+      "core-js-pure",
+      "esbuild",
+      "nx",
+      "sn-http-request",
+    ]);
 
     spinner.stop("Project wired for Next Experience");
 
@@ -444,6 +463,7 @@ export async function scaffoldComponents({ cwd, names, pluginSpecs = [] }) {
     const destDir = path.join(cwd, "src", "now-ui", name);
     const data = {
       componentName: name,
+      eventPrefix: toEventPrefix(name),
       scopeName: nowUi.scopeName ?? "",
       scopeSysId: nowUi.scopeSysId ?? "",
     };
@@ -462,6 +482,15 @@ export async function scaffoldComponents({ cwd, names, pluginSpecs = [] }) {
         await copyTree(pluginComponentDir, destDir, data);
       }
     }
+
+    // Render the per-component Storybook story into stories/<name>.stories.js.
+    const storyTemplate = path.join(BASE_TEMPLATE_DIR, STORY_TEMPLATE_SUBPATH);
+    const storyDest = path.join(cwd, "stories", `${name}.stories.js`);
+    await fs.mkdir(path.dirname(storyDest), { recursive: true });
+    await fs.writeFile(
+      storyDest,
+      ejs.render(await fs.readFile(storyTemplate, "utf-8"), data),
+    );
 
     nowUi.components[name] = buildComponentEntry(name);
     await appendBarrelImport(cwd, name);

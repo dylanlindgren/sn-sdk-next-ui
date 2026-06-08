@@ -1,0 +1,64 @@
+// Story for <<%= componentName %>>.
+import '../src/now-ui'
+import { action } from 'storybook/actions'
+import { expect, fn, userEvent, waitFor } from 'storybook/test'
+
+const TAG = '<%= componentName %>'
+
+const logItemSelected = action('<%= eventPrefix %>#ITEM_SELECTED')
+
+export default {
+  title: 'Components/<%= componentName %>',
+  tags: ['autodocs'],
+  render: (args) => {
+    const el = document.createElement(TAG)
+    el.setAttribute('button-size', String(args.buttonSize))
+    el.addEventListener('<%= eventPrefix %>#ITEM_SELECTED', (e) => {
+      logItemSelected(e.detail?.payload)
+    })
+    return el
+  },
+  argTypes: {
+    buttonSize: {
+      name: 'buttonSize',
+      description: 'The size applied to the buttons',
+      control: { type: 'select' },
+      options: ['sm', 'md', 'lg'],
+    },
+  },
+  args: { buttonSize: 'md' },
+}
+
+export const Default = {}
+
+export const Large = { args: { buttonSize: 'lg' } }
+
+export const ClicksSecondButton = {
+  play: async ({ canvasElement }) => {
+    const onItemSelected = fn()
+
+    const host = await waitFor(() => {
+      const el = canvasElement.querySelector(TAG)
+      if (!el?.shadowRoot) throw new Error(`${TAG} not upgraded yet`)
+      return el
+    })
+
+    host.addEventListener('<%= eventPrefix %>#ITEM_SELECTED', (e) => {
+      onItemSelected(e.detail?.payload)
+    })
+
+    const buttons = await waitFor(() => {
+      const found = host.shadowRoot.querySelectorAll('now-button')
+      if (found.length < 2) throw new Error('now-buttons not rendered yet')
+      return found
+    })
+
+    const secondButton = buttons[1]
+    const clickTarget = secondButton.shadowRoot?.querySelector('button') ?? secondButton
+    await userEvent.click(clickTarget)
+
+    await waitFor(() =>
+      expect(onItemSelected).toHaveBeenCalledWith({ item: 'Option 2' }),
+    )
+  },
+}

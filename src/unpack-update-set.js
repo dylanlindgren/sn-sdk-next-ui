@@ -10,6 +10,15 @@
  * produce the unpacked record tree that `now-sdk build --skip-clean` consumes
  * and merges with the Fluent/server records.
  *
+ * When some assets don't exist locally, generate-update-set must run WITHOUT
+ * `--offline` (e.g. with `--fetch-assets-from-instance`). In that mode
+ * validateSysApp emits a sys_app record using the instance's scope sys_id while
+ * the original locally-generated record remains, producing two `sys_app_*.xml`
+ * files, and every other record points at the stale id via <sys_scope>/
+ * <sys_package>. Unpack drops the stale sys_app, keeps the record whose sys_id
+ * matches `scopeSysId` in now-ui.json, and rewrites the stale id everywhere else
+ * (see cleanupDuplicateSysApp).
+ *
  * Usage:
  *   sn-sdk-next-ui unpack [--in <update-set.xml>] [--out <dir>] [--app-dir <name>]
  *   sn-sdk-next-ui unpack --clean
@@ -44,6 +53,92 @@ function parseArgs(argv) {
   return args;
 }
 
+/**
+ * Read the instance-corrected scope sys_id from now-ui.json.
+ *
+ * When `snc ui-component generate-update-set` runs WITHOUT `--offline` (e.g. with
+ * `--fetch-assets-from-instance`), validateSysApp queries the connected instance
+ * and writes the real scope sys_id back into now-ui.json's `scopeSysId`. That is
+ * the authoritative id for the app's sys_app record.
+ */
+function readScopeSysId(cwd) {
+  const p = join(cwd, "now-ui.json");
+  if (!existsSync(p)) return null;
+  try {
+    return JSON.parse(readFileSync(p, "utf8")).scopeSysId ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** Recursively collect every .xml file path under `dir`. */
+function collectXmlFiles(dir) {
+  const out = [];
+  if (!existsSync(dir)) return out;
+  for (const entry of readdirSync(dir)) {
+    const p = join(dir, entry);
+    if (statSync(p).isDirectory()) out.push(...collectXmlFiles(p));
+    else if (entry.endsWith(".xml")) out.push(p);
+  }
+  return out;
+}
+
+/**
+ * Remove the duplicate sys_app record and rewrite its stale scope sys_id.
+ *
+ * Without `--offline`, validateSysApp emits a sys_app record using the instance's
+ * scope sys_id while the original locally-generated record (with a different,
+ * stale sys_id) also remains. This leaves two `sys_app_*.xml` files, and every
+ * other record still points at the stale id via <sys_scope>/<sys_package>.
+ *
+ * Keep only `sys_app_<scopeSysId>.xml` (matching now-ui.json), delete the stale
+ * sys_app record(s), then replace the stale sys_id with `scopeSysId` everywhere
+ * under the app root so all records reference the instance scope.
+ *
+ * Guarded: if the expected `sys_app_<scopeSysId>.xml` isn't present we can't be
+ * sure which record is canonical, so we leave everything untouched.
+ *
+ * Returns { removed, rewritten } — the deleted sys_app filenames and the count
+ * of other files whose references were updated.
+ */
+function cleanupDuplicateSysApp(appRoot, scopeSysId) {
+  const empty = { removed: [], rewritten: 0 };
+  const scopeDir = join(appRoot, "scope");
+  if (!scopeSysId || !existsSync(scopeDir)) return empty;
+
+  const wanted = `sys_app_${scopeSysId}.xml`;
+  const sysAppFiles = readdirSync(scopeDir).filter(
+    (f) =>
+      f.endsWith(".xml") && (f.startsWith("sys_app_") || f === "sys_app.xml"),
+  );
+  if (sysAppFiles.length <= 1 || !sysAppFiles.includes(wanted)) return empty;
+
+  // Stale sys_ids are the sys_app filenames we're dropping (sans prefix/suffix).
+  const removed = [];
+  const staleIds = [];
+  for (const f of sysAppFiles) {
+    if (f === wanted) continue;
+    rmSync(join(scopeDir, f));
+    removed.push(f);
+    const id = f.slice("sys_app_".length, -".xml".length);
+    if (id) staleIds.push(id);
+  }
+  if (staleIds.length === 0) return { removed, rewritten: 0 };
+
+  // Repoint every remaining record's <sys_scope>/<sys_package> at the instance id.
+  let rewritten = 0;
+  for (const file of collectXmlFiles(appRoot)) {
+    const before = readFileSync(file, "utf8");
+    let after = before;
+    for (const stale of staleIds) after = after.split(stale).join(scopeSysId);
+    if (after !== before) {
+      writeFileSync(file, after);
+      rewritten++;
+    }
+  }
+  return { removed, rewritten };
+}
+
 function findUpdateSet(nowCliDir) {
   if (!existsSync(nowCliDir)) return null;
   const xmls = readdirSync(nowCliDir)
@@ -66,7 +161,7 @@ function unwrapPayload(raw) {
   return parts.length ? parts.join("") : raw.trim();
 }
 
-export function unpack({ inPath, outRoot, appDir }) {
+export function unpack({ inPath, outRoot, appDir, scopeSysId = null }) {
   const xml = readFileSync(inPath, "utf8");
   const blocks =
     xml.match(/<sys_update_xml\b[\s\S]*?<\/sys_update_xml>/g) ?? [];
@@ -103,7 +198,15 @@ export function unpack({ inPath, outRoot, appDir }) {
     byDir[subDir] = (byDir[subDir] || 0) + 1;
   }
 
-  return { written, byDir, appRoot };
+  // Drop the stale duplicate sys_app record (and repoint references to the
+  // instance scope) left behind when generate-update-set runs without --offline.
+  const { removed, rewritten } = cleanupDuplicateSysApp(appRoot, scopeSysId);
+  if (removed.length) {
+    written -= removed.length;
+    byDir.scope = (byDir.scope || 0) - removed.length;
+  }
+
+  return { written, byDir, appRoot, removed, rewritten };
 }
 
 // Entry point for `sn-sdk-next-ui unpack <args>`.
@@ -147,9 +250,24 @@ export function runUnpackCli(argv) {
   const appDir = args.appDir ?? "app";
   const outRoot = resolve(cwd, args.out ?? "dist");
 
+  const scopeSysId = readScopeSysId(cwd);
+
   console.log(`Unpacking ${inPath}`);
   console.log(`  -> ${join(outRoot, appDir)}/{update,scope}`);
-  const { written, byDir, appRoot } = unpack({ inPath, outRoot, appDir });
+  const { written, byDir, appRoot, removed, rewritten } = unpack({
+    inPath,
+    outRoot,
+    appDir,
+    scopeSysId,
+  });
+  if (removed.length) {
+    console.log(
+      `  ~ removed ${removed.length} duplicate sys_app record(s): ${removed.join(", ")}`,
+    );
+    console.log(
+      `  ~ repointed scope references to ${scopeSysId} in ${rewritten} file(s)`,
+    );
+  }
   console.log(
     `Done: ${written} record(s) written ` +
       Object.entries(byDir)

@@ -1,10 +1,10 @@
 {
   "module": "src/now-ui/index.js",
   "scripts": {
-    "dev": "snc ui-component develop --fetch-assets-from-instance --no-type-check",
     "clean": "now-sdk clean && sn-sdk-next-ui unpack --clean",
-    "build": "now-sdk clean && sn-sdk-next-ui unpack --clean && snc ui-component generate-update-set --offline --no-type-check && sn-sdk-next-ui unpack && now-sdk build --skip-clean",
-    "deploy": "now-sdk pack && now-sdk install"
+    "build": "now-sdk clean && sn-sdk-next-ui unpack --clean && snc ui-component generate-update-set --fetch-assets-from-instance --no-type-check && now-sdk build --skip-clean && sn-sdk-next-ui unpack",
+    "deploy": "now-sdk pack && now-sdk install",
+    "storybook": "storybook dev -p 6006"
   },
   "optionalDependencies": {
     "@servicenow/now-button": "instance"
@@ -15,6 +15,11 @@
     "ajv": "6.12.6",
     "@babel/runtime": "7.18.9",
     "eslint": "8.50.0",
-    "sass": "1.53.0"
+    "sass": "1.53.0",
+    "vite": "^7.3.5",
+    "@dylanlindgren/storybook-addon-sn-next-ui": "^0.1.1",
+    "@storybook/web-components-vite": "^10.4.2",
+    "storybook": "^10.4.2",
+    "react": "^19.2.7"
   }
 }

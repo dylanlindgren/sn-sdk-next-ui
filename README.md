@@ -50,7 +50,7 @@ Transforms the current SDK project in place. It:
 
 - adds the `dev`, `build`, `clean` and `deploy` scripts (your existing `transform`/`types` scripts are preserved),
 - adds the Next Experience dev dependencies and a `module` entry to `package.json`,
-- creates `now-ui.json` (seeded with your scope from `now.config.json`), `now-cli.json`, `.eslintrc`, `dev/index.html`, and the `example/` preview harness,
+- creates `now-ui.json` (seeded with your scope from `now.config.json`), `now-cli.json`, `.eslintrc`, `.storybook/`, and Storybook configuration,
 - on pnpm projects, allows pnpm to run the build scripts the UI stack needs (via `allowBuilds` in `pnpm-workspace.yaml`), and
 - installs dependencies (using whichever package manager invoked it).
 
@@ -72,7 +72,7 @@ Run these with your package manager (`npm run build`, `pnpm build`, `yarn build`
 
 | Script    | What it does                                                                                                                                                        |
 | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `dev`     | Runs `snc ui-component develop` — a live dev server that renders the preview in `example/`.                                                                         |
+| `dev`     | Runs Storybook with interactive component previews and live reload.                                                                                                 |
 | `clean`   | `now-sdk clean` and removes the `.now-cli` working directory.                                                                                                       |
 | `build`   | everything in `clean` plus `snc ui-component generate-update-set`, unpacks the update set into the ServiceNow SDK `dist` folder, and then `now-sdk build`           |
 | `deploy`  | `now-sdk pack && now-sdk install` — installs the built application (UI components included) onto your instance.                                                      |
@@ -83,10 +83,10 @@ Run these with your package manager (`npm run build`, `pnpm build`, `yarn build`
 your-sdk-project/
 ├── now-ui.json                 # Next Experience component manifest
 ├── now-cli.json                # snc dev-server config
-├── dev/index.html              # dev-server page template
-├── example/
-│   ├── element.js              # EDIT THIS — controls the dev preview
-│   └── preview.js              # preview rendering engine
+├── .storybook/
+│   └── main.mjs                # Storybook configuration
+├── stories/
+│   └── my-counter.stories.js   # EDIT THIS — component preview and tests
 └── src/
     ├── fluent/ …               # your existing SDK/Fluent code (untouched)
     ├── server/ …               # your existing server code (untouched)
@@ -97,29 +97,42 @@ your-sdk-project/
             └── index.scss
 ```
 
-## Customising the dev preview
+## Component stories
 
-The `dev` command renders every component listed in `now-ui.json`, so components you add appear automatically with their default property values.
+Each component gets a Storybook story file (e.g., `stories/my-counter.stories.js`). Edit these files to:
 
-To customise, edit `example/element.js` and add entries to the `previews` map, keyed by component tag:
+- **Define variants**: Create multiple named stories to showcase different states and prop combinations.
+- **Test interactions**: Use Storybook's play functions to test user interactions and component behavior.
+- **Document props**: Use `argTypes` to describe component properties with descriptions, types, and control UI.
+
+Example story:
 
 ```js
-const previews = {
-  // one instance with custom props (merged over the now-ui.json defaults):
-  "my-counter": { props: { buttonSize: "lg" } },
+import '../src/now-ui'
 
-  // several labelled variants of the same component:
-  "status-badge": [
-    { label: "Small", props: { buttonSize: "sm" } },
-    { label: "Large", props: { buttonSize: "lg" } },
-  ],
-};
+const TAG = 'my-counter'
+
+export default {
+  title: 'Components/my-counter',
+  tags: ['autodocs'],
+  render: (args) => {
+    const el = document.createElement(TAG)
+    el.setAttribute('button-size', String(args.buttonSize))
+    return el
+  },
+  argTypes: {
+    buttonSize: {
+      description: 'The size applied to the buttons',
+      control: { type: 'select' },
+      options: ['sm', 'md', 'lg'],
+    },
+  },
+  args: { buttonSize: 'md' },
+}
+
+export const Default = {}
+export const Large = { args: { buttonSize: 'lg' } }
 ```
-
-Primitive props are applied as kebab-case attributes (`buttonSize` = `button-size`); object/array props are assigned as DOM properties.
-
-> [!NOTE]
-> The preview will use whatever theme is set for the Unified Navigation App on your instance. You can update the theme URL by following the comments in `dev/index.html`.
 
 ## Plugins
 
