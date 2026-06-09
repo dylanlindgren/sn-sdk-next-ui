@@ -1,6 +1,7 @@
 {
   "module": "src/now-ui/index.js",
   "scripts": {
+    "develop": "storybook dev -p 6006",
     "clean": "now-sdk clean && sn-sdk-next-ui unpack --clean",
     "build": "now-sdk clean && sn-sdk-next-ui unpack --clean && snc ui-component generate-update-set --fetch-assets-from-instance --no-type-check && now-sdk build --skip-clean && sn-sdk-next-ui unpack",
     "deploy": "now-sdk pack && now-sdk install",
@@ -17,7 +18,7 @@
     "eslint": "8.50.0",
     "sass": "1.53.0",
     "vite": "^7.3.5",
-    "@dylanlindgren/storybook-addon-sn-next-ui": "^0.1.1",
+    "@dylanlindgren/storybook-addon-sn-next-ui": "^1.0.0",
     "@storybook/web-components-vite": "^10.4.2",
     "storybook": "^10.4.2",
     "react": "^19.2.7"
