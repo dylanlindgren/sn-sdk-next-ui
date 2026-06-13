@@ -5,6 +5,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { parseArgs } from "node:util";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { runUnpackCli } from "./unpack-update-set.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -560,4 +561,83 @@ async function promptComponentNames(existing) {
   }
 
   return names;
+}
+
+// ── build: orchestrate snc generate-update-set → unpack → now-sdk build ──────────
+
+// The component barrel that `snc ui-component generate-update-set` resolves as
+// the build entry, via package.json's `module` field. Must match where `add`
+// writes the barrel (see appendBarrelImport).
+const NOW_UI_MODULE_ENTRY = "src/now-ui/index.js";
+
+// Run `fn` with package.json's `module` field temporarily set to `entry`,
+// restoring the file byte-for-byte afterwards — even if `fn` throws.
+//
+// `snc ui-component generate-update-set` requires `module` to locate the
+// component entry, but the field must NOT persist: `now-sdk build` packages
+// package.json into the deployed app, and the instance's module loader fails on
+// a `module` path that doesn't exist in the deployed context. So `module` lives
+// only for the duration of the snc call — never reaching git or the artifact
+// now-sdk ships. The `finally` guarantees restoration if snc fails midway.
+async function withModuleField(cwd, entry, fn) {
+  const pkgPath = path.join(cwd, "package.json");
+  const original = await fs.readFile(pkgPath, "utf-8");
+  const pkg = JSON.parse(original);
+  pkg.module = entry;
+  await writeJson(pkgPath, pkg);
+  try {
+    return await fn();
+  } finally {
+    await fs.writeFile(pkgPath, original);
+  }
+}
+
+// Run a full hybrid build. This replaces the brittle `&&` shell chain that used
+// to live in package.json's `build` script, so the transient `module` field is
+// managed atomically (present only for snc, restored on failure) and the build
+// steps stay in one ordered, testable place.
+export async function build({ argv = [] } = {}) {
+  const cwd = process.cwd();
+  const run = (cmd, args) => execa(cmd, args, { cwd, stdio: "inherit" });
+
+  try {
+    // 1. Clean prior build output and the snc working directory.
+    await run("now-sdk", ["clean"]);
+    runUnpackCli(["--clean"]);
+
+    // 2. Generate the UI-component update set. `module` is present only here.
+    await withModuleField(cwd, NOW_UI_MODULE_ENTRY, () =>
+      run("snc", [
+        "ui-component",
+        "generate-update-set",
+        "--fetch-assets-from-instance",
+        "--no-type-check",
+      ]),
+    );
+
+    // 3. Build the Fluent/server records. `module` is already gone, so the
+    //    package.json now-sdk packages is clean for the instance.
+    await run("now-sdk", ["build", "--skip-clean"]);
+
+    // 4. Overlay the unpacked UI-component records into dist/app.
+    runUnpackCli([]);
+  } catch (error) {
+    console.error(`\nbuild failed: ${error.shortMessage ?? error.message}`);
+    process.exit(1);
+  }
+}
+
+// ── deploy: pack and install the built application ──────────────────────────────
+
+export async function deploy({ argv = [] } = {}) {
+  const cwd = process.cwd();
+  const run = (cmd, args) => execa(cmd, args, { cwd, stdio: "inherit" });
+
+  try {
+    await run("now-sdk", ["pack"]);
+    await run("now-sdk", ["install"]);
+  } catch (error) {
+    console.error(`\ndeploy failed: ${error.shortMessage ?? error.message}`);
+    process.exit(1);
+  }
 }

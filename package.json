@@ -1,6 +1,6 @@
 {
   "name": "sn-sdk-next-ui",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Add Next Experience UI component development to a ServiceNow SDK (Fluent) project — build components with the ServiceNow CLI, install them with the SDK.",
   "bin": {
     "sn-sdk-next-ui": "./src/index.js"

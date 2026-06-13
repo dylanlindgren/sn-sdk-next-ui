@@ -2,7 +2,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { init, add } from "./lib.js";
+import { init, add, build, deploy } from "./lib.js";
 import { runUnpackCli } from "./unpack-update-set.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -16,8 +16,13 @@ Usage:
   sn-sdk-next-ui init            Transform the current SDK project into a hybrid
                              SDK + Next Experience project (run once).
   sn-sdk-next-ui add             Add one or more UI components (interactive).
+  sn-sdk-next-ui build           Run the full hybrid build: snc generate-update-set,
+                             unpack, then now-sdk build. Manages the transient
+                             package.json 'module' field so it never ships to
+                             the instance.
+  sn-sdk-next-ui deploy          Pack and install the built application (now-sdk).
   sn-sdk-next-ui unpack          Split an snc update-set XML into SDK record files.
-                             (Used internally by the generated build script.)
+                             (Used internally by the build command.)
 
 Options:
   --plugins <a,b>            Extra plugin specs (package names or paths) to
@@ -42,6 +47,12 @@ switch (cmd) {
     break;
   case "add":
     await add({ argv: rest });
+    break;
+  case "build":
+    await build({ argv: rest });
+    break;
+  case "deploy":
+    await deploy({ argv: rest });
     break;
   case "unpack":
     await runUnpackCli(rest);

@@ -12,6 +12,8 @@ It does this by splitting responsibilities between the two toolchains:
 - the **ServiceNow CLI (`snc`)** is used only to _build_ the components, and
 - the **ServiceNow SDK (`now-sdk`)** is used to install the built components onto an instance alongside the rest of your application.
 
+Furthermore, local development is modernized with [Storybook](https://storybook.js.org): components render live in the browser with automatic reload, isolated previews, and interaction tests. This is powered by [`@dylanlindgren/storybook-addon-sn-next-ui`](https://www.npmjs.com/package/@dylanlindgren/storybook-addon-sn-next-ui), which teaches Storybook how to render Next Experience components, so you get a fast, modern feedback loop.
+
 ## Prerequisites
 
 - An existing ServiceNow SDK project (created with `now-sdk init`).
@@ -49,7 +51,7 @@ npm exec sn-sdk-next-ui add
 Transforms the current SDK project in place. It:
 
 - adds the `dev`, `build`, `clean` and `deploy` scripts (your existing `transform`/`types` scripts are preserved),
-- adds the Next Experience dev dependencies and a `module` entry to `package.json`,
+- adds the Next Experience dev dependencies to `package.json`,
 - creates `now-ui.json` (seeded with your scope from `now.config.json`), `now-cli.json`, `.eslintrc`, `.storybook/`, and Storybook configuration,
 - on pnpm projects, allows pnpm to run the build scripts the UI stack needs (via `allowBuilds` in `pnpm-workspace.yaml`), and
 - installs dependencies (using whichever package manager invoked it).
@@ -61,10 +63,23 @@ Transforms the current SDK project in place. It:
 Interactively scaffolds one or more components. For each component it:
 
 - creates `src/now-ui/<component>/` from the component template,
+- creates a Storybook story at `stories/<component>.stories.js`,
 - registers the component in `now-ui.json`, and
 - adds an import to the `src/now-ui` barrel.
 
 Component names must be valid custom-element names (lowercase, start with a letter, contain a hyphen — e.g. `my-counter`).
+
+### `sn-sdk-next-ui build`
+
+Runs the full hybrid build. It builds your UI components with `snc`, unpacks them into the SDK `dist` folder, and runs `now-sdk build`. The result is a single application containing both your Fluent/server code and your UI components, ready to `deploy`.
+
+You normally run this with `npm run build` (the `build` script added to your `package.json` by `init`), rather than calling it directly.
+
+### `sn-sdk-next-ui deploy`
+
+Packs and installs the built application onto your instance (`now-sdk pack && now-sdk install`).
+
+You normally run this with `npm run deploy` (the `deploy` script added to your `package.json` by `init`), rather than calling it directly.
 
 ## Project scripts (after `init`)
 
@@ -79,9 +94,11 @@ Run these with your package manager (`npm run build`, `pnpm build`, `yarn build`
 
 ## Project layout (after `init` + `add`)
 
+`my-counter` here is just an example component name — your components are named whatever you choose when running `add`, and you'll have one folder under `src/now-ui/` and one story per component.
+
 ```
 your-sdk-project/
-├── now-ui.json                 # Next Experience component manifest
+├── now-ui.json                 # EDIT THIS — component manifest: properties, events, UI Builder config
 ├── now-cli.json                # snc dev-server config
 ├── .storybook/
 │   └── main.mjs                # Storybook configuration
@@ -93,8 +110,8 @@ your-sdk-project/
     └── now-ui/
         ├── index.js            # barrel — imports every component
         └── my-counter/
-            ├── index.js
-            └── index.scss
+            ├── index.js        # EDIT THIS — your component's logic & markup
+            └── index.scss      # EDIT THIS — your component's styles
 ```
 
 ## Component stories
@@ -132,34 +149,6 @@ export default {
 
 export const Default = {}
 export const Large = { args: { buttonSize: 'lg' } }
-```
-
-## Plugins
-
-`sn-sdk-next-ui` can be extended by plugins that layer extra template files and `package.json` entries on top of the base. A plugin is any installed package that declares an `snSdkNextUiPlugin` field in its `package.json`:
-
-```json
-{
-  "name": "my-sn-sdk-next-ui-plugin",
-  "snSdkNextUiPlugin": "./plugin.js"
-}
-```
-
-whose entry exports a descriptor:
-
-```js
-// plugin.js
-export const plugin = {
-  templateDir: "./template", // overlaid on the base template tree
-  packageMerge: "./package.merge.json", // optional, deep-merged into package.json
-};
-```
-
-Plugins declared as dependencies of your project are **discovered automatically**. You can also pass them explicitly (e.g. a local path during development):
-
-```bash
-npm exec sn-sdk-next-ui init --plugins ../my-sn-sdk-next-ui-plugin
-npm exec sn-sdk-next-ui add --plugins ../my-sn-sdk-next-ui-plugin
 ```
 
 ## License

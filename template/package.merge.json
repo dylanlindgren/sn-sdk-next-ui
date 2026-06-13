@@ -1,10 +1,9 @@
 {
-  "module": "src/now-ui/index.js",
   "scripts": {
     "develop": "storybook dev -p 6006",
     "clean": "now-sdk clean && sn-sdk-next-ui unpack --clean",
-    "build": "now-sdk clean && sn-sdk-next-ui unpack --clean && snc ui-component generate-update-set --fetch-assets-from-instance --no-type-check && now-sdk build --skip-clean && sn-sdk-next-ui unpack",
-    "deploy": "now-sdk pack && now-sdk install",
+    "build": "sn-sdk-next-ui build",
+    "deploy": "sn-sdk-next-ui deploy",
     "storybook": "storybook dev -p 6006"
   },
   "optionalDependencies": {
